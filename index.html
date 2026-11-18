@@ -397,7 +397,14 @@ function fireworks(cv){const x=cv.getContext('2d'),dpr=Math.min(devicePixelRatio
   for(let i=ps.length-1;i>=0;i--){const p=ps[i];p.x+=p.vx;p.y+=p.vy;p.vy+=.06;p.vx*=.985;p.l-=.011;if(p.l<=0){ps.splice(i,1);continue}
    x.globalAlpha=p.l;x.fillStyle=p.c;if(p.k){x.font=`${p.s*6}px sans-serif`;x.fillText('✦',p.x,p.y)}else{x.beginPath();x.arc(p.x,p.y,p.s,0,7);x.fill()}}
   x.globalAlpha=1;cpRAF=requestAnimationFrame(loop)};loop()}
-function welcome(){st.welcomed=1;save();
+const NEWS={id:'future-tasks',html:()=>`<div style="font-size:44px">🎉</div><div class="srt" style="font-size:22px">新機能のお知らせ</div><h3>未来のタスクを登録できるようにしました！</h3>
+ <div class="wl"><div><b>1</b>「＋ タスクを追加」を押す</div><div><b>2</b>種類を「📌 1回だけ」にする</div><div><b>3</b>「やる日」で明日や先の日付を選ぶ</div></div>
+ <div class="sub">先の予定は「🗓 これからの予定」と、カレンダーのピンクの点で確認できるよ</div>
+ <button class="btn" onclick="seenNews();closeM();addOn(addD(jst(),1))">さっそく使ってみる</button><button class="btn b" onclick="seenNews();closeM();render()">OK！</button>`};
+function seenNews(){st.news=NEWS.id;save()}
+function showNews(){if(st.news===NEWS.id)return;modal(NEWS.html(),1)}
+
+function welcome(){st.welcomed=1;st.news=NEWS.id;save();
  modal(`<div class="big pop" style="width:120px">${CATS[0].svg}</div><h3>ようこそ！<br>実行機能研究所へ 🔬</h3><div class="sub">やることを片付けて、ネコを集める手帳だよ</div>
  <div class="wl"><div><b>1</b>タスクを登録して、終わったらチェック</div><div><b>2</b>もらったコインで ネコガチャ 🎰</div><div><b>3</b>ネコ図鑑のコンプリートをめざそう 📖</div></div>
  <div class="sub">詳しい使い方は、右上の <span class="qm">？</span> を押してみてね</div><button class="btn" onclick="closeM();nudgeQ()">はじめる！</button>`,1)}
@@ -454,5 +461,5 @@ function checkLeft(){if(tab!=='t'||busy||!$('#ov').hidden||document.getElementBy
 function loSet(id,v,b){lo[id]=v;[...b.parentNode.children].forEach(x=>x.classList.remove('sel'));b.classList.add('sel')}
 function loDone(){const d=jst();let k=0;st.tasks=st.tasks.filter(t=>lo[t.id]!=='x');st.tasks.forEach(t=>{if(lo[t.id]==='k'){t.date=d;t.carry=1;k++}});lo={};save();closeM();render();float(k?'今日はいけるはず！':'スッキリ！')}
 try{document.addEventListener('visibilitychange',()=>{if(!document.hidden)render()})}catch(e){}
-render();if(st.welcomed===0)welcome();
+render();if(st.welcomed===0)welcome();else showNews();
 </script></body></html>
