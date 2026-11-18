@@ -401,14 +401,20 @@ function fireworks(cv){const x=cv.getContext('2d'),dpr=Math.min(devicePixelRatio
   for(let i=ps.length-1;i>=0;i--){const p=ps[i];p.x+=p.vx;p.y+=p.vy;p.vy+=.06;p.vx*=.985;p.l-=.011;if(p.l<=0){ps.splice(i,1);continue}
    x.globalAlpha=p.l;x.fillStyle=p.c;if(p.k){x.font=`${p.s*6}px sans-serif`;x.fillText('✦',p.x,p.y)}else{x.beginPath();x.arc(p.x,p.y,p.s,0,7);x.fill()}}
   x.globalAlpha=1;cpRAF=requestAnimationFrame(loop)};loop()}
-const NEWS={id:'future-tasks',html:()=>`<div style="font-size:44px">🎉</div><div class="srt" style="font-size:22px">新機能のお知らせ</div><h3>未来のタスクを登録できるようにしました！</h3>
- <div class="wl"><div><b>1</b>「＋ タスクを追加」を押す</div><div><b>2</b>種類を「📌 1回だけ」にする</div><div><b>3</b>「やる日」で明日や先の日付を選ぶ</div></div>
- <div class="sub">先の予定は「🗓 これからの予定」と、カレンダーのピンクの点で確認できるよ</div>
- <button class="btn" onclick="seenNews();closeM();addOn(addD(jst(),1))">さっそく使ってみる</button><button class="btn b" onclick="seenNews();closeM();render()">OK！</button>`};
-function seenNews(){st.news=NEWS.id;save()}
-function showNews(){if(st.news===NEWS.id)return;modal(NEWS.html(),1)}
-
-function welcome(){st.welcomed=1;st.news=NEWS.id;save();
+const newsBox=(title,steps,note,tryJs)=>`<div style="font-size:44px">🎉</div><div class="srt" style="font-size:22px">新機能のお知らせ</div><h3>${title}</h3>
+ <div class="wl">${steps.map((s,i)=>`<div><b>${i+1}</b>${s}</div>`).join('')}</div>
+ <div class="sub">${note}</div>
+ <button class="btn" onclick="seenNews();closeM();${tryJs}">さっそく使ってみる</button><button class="btn b" onclick="seenNews();closeM();render();setTimeout(showNews,300)">OK！</button>`;
+const NEWS=[
+ {id:'future-tasks',html:()=>newsBox('未来のタスクを登録できるようにしました！',['「＋ タスクを追加」を押す','種類を「📌 1回だけ」にする','「やる日」で明日や先の日付を選ぶ'],'先の予定は「🗓 これからの予定」と、カレンダーのピンクの点で確認できるよ','addOn(addD(jst(),1))')},
+ {id:'routine-sort',html:()=>newsBox('ルーティンの順番を入れ替えられるようにしました！',['「🔁 ルーティン」の右の「↕ 並べ替え」を押す','▲▼で順番を入れ替える','「✅ 完了」を押しておしまい'],'曜日指定のルーティンも、まとめて並べ替えられるよ','tryNews2()')}
+];
+let curNews=null;
+const seenList=()=>{if(!Array.isArray(st.newsSeen)){st.newsSeen=st.news?[st.news]:[];delete st.news}return st.newsSeen};
+function seenNews(){if(curNews&&!seenList().includes(curNews))seenList().push(curNews);curNews=null;save()}
+function showNews(){if(!$('#ov').hidden)return;const n=NEWS.find(x=>!seenList().includes(x.id));if(!n)return;curNews=n.id;modal(n.html(),1)}
+function tryNews2(){tab='t';if(st.tasks.filter(t=>t.type==='r').length>1)sortM=true;render();setTimeout(()=>{const e=document.querySelector('.shd');if(e){e.scrollIntoView({behavior:'smooth',block:'start'});scrollBy(0,-110)}},50);if(!sortM)float('ルーティンを2つ以上作ると並べ替えできるよ')}
+function welcome(){st.welcomed=1;st.newsSeen=NEWS.map(x=>x.id);delete st.news;save();
  modal(`<div class="big pop" style="width:120px">${CATS[0].svg}</div><h3>ようこそ！<br>実行機能研究所へ 🔬</h3><div class="sub">やることを片付けて、ネコを集める手帳だよ</div>
  <div class="wl"><div><b>1</b>タスクを登録して、終わったらチェック</div><div><b>2</b>もらったコインで ネコガチャ 🎰</div><div><b>3</b>ネコ図鑑のコンプリートをめざそう 📖</div></div>
  <div class="sub">詳しい使い方は、右上の <span class="qm">？</span> を押してみてね</div><button class="btn" onclick="closeM();nudgeQ()">はじめる！</button>`,1)}
