@@ -434,7 +434,10 @@ function help(){const s=(t,items,open)=>`<details ${open?'open':''}><summary>${t
  ${s('💾 データとホーム画面',['記録はこの端末のブラウザの中だけに保存される（ログイン不要）','ヘッダーの 💾 で <b>バックアップのコード</b> をコピーして保存しておくと安心','機種変更やデータが消えたときは、コードを「復元する」に貼り付け','Safari の共有ボタン →「ホーム画面に追加」でアプリみたいに使える','※ Safari とホーム画面のアプリは記録が別々。移すときはバックアップのコードを使ってね'])}
  </div><button class="btn b" onclick="closeM()">とじる</button>`)}
 
-function bkCode(){return 'NYANKO1:'+btoa(unescape(encodeURIComponent(JSON.stringify(st))))}
+const B32='ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+function b32e(bytes){let o='',v=0,n=0;for(const x of bytes){v=(v<<8)|x;n+=8;while(n>=5){o+=B32[(v>>>(n-5))&31];n-=5}v&=(1<<n)-1}if(n)o+=B32[(v<<(5-n))&31];return o}
+function b32d(s){const out=[];let v=0,n=0;for(const ch of s){const i=B32.indexOf(ch);if(i<0)continue;v=(v<<5)|i;n+=5;if(n>=8){out.push((v>>>(n-8))&255);n-=8;v&=(1<<n)-1}}return new Uint8Array(out)}
+function bkCode(){return 'NYANKO2:'+b32e(new TextEncoder().encode(JSON.stringify(st)))}
 const inFrame=()=>{try{return window.self!==window.top}catch(e){return true}};
 function backup(){const c=bkCode(),canShare=!!navigator.share;
  modal(`<h3>💾 データのバックアップ</h3><div class="sub" style="text-align:left">下のどれかの方法でコードを保存しておいてね。別の端末やホーム画面のアプリで「復元」すると、記録をそのまま引き継げます。</div>
@@ -453,9 +456,11 @@ function cpy(b){const t=$('#bk'),c=t.value;const ok=()=>{b.textContent='✅ コ�
 async function shareBk(){try{await navigator.share({title:'にゃんこ手帳のバックアップ',text:bkCode()})}catch(e){if(!e||e.name!=='AbortError')float('共有できなかったよ。コピーかファイル保存を使ってね')}}
 function saveFile(){try{const bl=new Blob([bkCode()],{type:'text/plain'}),u=URL.createObjectURL(bl),a=document.createElement('a');a.href=u;a.download=`nyanko-backup-${jst()}.txt`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);float('ファイルを保存したよ')}catch(e){float('ここではファイル保存できないみたい。コピーを使ってね')}}
 function fromFile(inp){const f=inp.files&&inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{$('#rs').value=String(r.result||'');float('読み込んだよ。「復元する」を2回タップしてね');$('#rs').scrollIntoView({block:'center'})};r.readAsText(f);inp.value=''}
-function parseBk(raw){const s0=String(raw||'').normalize('NFKC'),i=s0.indexOf('NYANKO1:');if(i<0)throw new Error('「NYANKO1:」で始まるコードが見つからないよ');
- let b=s0.slice(i+8).replace(/[^A-Za-z0-9+/=_-]/g,'').replace(/-/g,'+').replace(/_/g,'/');b=b.replace(/=+$/,'');while(b.length%4)b+='=';
- let s;try{s=JSON.parse(decodeURIComponent(escape(atob(b))))}catch(e){throw new Error('コードが途中で切れているみたい。全部コピーできているか確認してね')}
+function parseBk(raw){const s0=String(raw||'').normalize('NFKC'),m=/nyanko([12])\s*[:：]/i.exec(s0);if(!m)throw new Error('「NYANKO」で始まるコードが見つからないよ');
+ const body=s0.slice(m.index+m[0].length);let s;
+ if(m[1]==='2'){try{s=JSON.parse(new TextDecoder().decode(b32d(body.toUpperCase().replace(/[^A-Z2-7]/g,''))))}catch(e){throw new Error('コードが途中で切れているみたい。全部コピーできているか確認してね')}}
+ else{let b=body.replace(/[^A-Za-z0-9+/=_-]/g,'').replace(/-/g,'+').replace(/_/g,'/').replace(/=+$/,'');while(b.length%4)b+='=';
+  try{s=JSON.parse(decodeURIComponent(escape(atob(b))))}catch(e){throw new Error(/[A-Z]/.test(body.slice(0,40))?'コードが途中で切れているみたい。全部コピーできているか確認してね':'コードの大文字・小文字が変わってしまったみたい。新しい版で、コピー元のアプリからもう一度バックアップしてね')}}
  if(!s||!Array.isArray(s.tasks)||typeof s.xp!=='number')throw new Error('このコードは読み込めないみたい');return s}
 function restore(b){let s;try{s=parseBk($('#rs').value)}catch(e){b.textContent='⚠ '+e.message;b.style.background='#e5484d';setTimeout(()=>{if(b.isConnected){b.textContent='復元する';b.style.background=''}},3500);return}
  if(!b.dataset.ok){b.dataset.ok=1;b.textContent='本当に上書きする？もう一度タップで確定';b.style.background='#e5484d';setTimeout(()=>{if(b.isConnected){delete b.dataset.ok;b.textContent='復元する';b.style.background=''}},4000);return}
