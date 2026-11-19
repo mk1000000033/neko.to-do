@@ -435,15 +435,30 @@ function help(){const s=(t,items,open)=>`<details ${open?'open':''}><summary>${t
  </div><button class="btn b" onclick="closeM()">とじる</button>`)}
 
 function bkCode(){return 'NYANKO1:'+btoa(unescape(encodeURIComponent(JSON.stringify(st))))}
-function backup(){const c=bkCode();
- modal(`<h3>💾 データのバックアップ</h3><div class="sub" style="text-align:left">下のコードをコピーして、メモアプリやLINEの自分用トークなどに保存しておいてね。別の端末やホーム画面のアプリで「復元」に貼り付けると、記録をそのまま引き継げます。</div><textarea id="bk" readonly rows="3" style="font-size:12px;margin-top:8px">${c}</textarea><button class="btn b" onclick="cpy(this)">📋 コードをコピー</button><div class="lab" style="margin-top:16px">♻ 復元する</div><textarea id="rs" rows="3" placeholder="ここにバックアップのコードを貼り付け"></textarea><button class="btn" onclick="restore(this)">復元する</button><div class="sub" style="margin-top:6px">復元すると、この端末にある今の記録は上書きされます</div><button class="btn l" onclick="closeM()">とじる</button>`)}
-function cpy(b){const c=$('#bk').value;const ok=()=>{b.textContent='✅ コピーしたよ！';setTimeout(()=>{if(b.isConnected)b.textContent='📋 コードをコピー'},2000)};
- const fb=()=>{const t=$('#bk');t.focus();t.select();t.setSelectionRange(0,c.length);let r=false;try{r=document.execCommand('copy')}catch(e){}if(r)ok();else b.textContent='コードを長押しして全選択→コピーしてね'};
- try{navigator.clipboard.writeText(c).then(ok,fb)}catch(e){fb()}}
-function restore(b){const raw=$('#rs').value.trim().replace(/\s/g,'');let s;
- try{if(!raw.startsWith('NYANKO1:'))throw 0;s=JSON.parse(decodeURIComponent(escape(atob(raw.slice(8)))));if(!s||!Array.isArray(s.tasks)||typeof s.xp!=='number')throw 0}catch(e){b.textContent='コードが正しくないみたい…';b.style.background='#e5484d';setTimeout(()=>{if(b.isConnected){b.textContent='復元する';b.style.background=''}},2500);return}
- if(!b.dataset.ok){b.dataset.ok=1;b.textContent='本当に上書きする？もう一度タップで確定';b.style.background='#e5484d';setTimeout(()=>{if(b.isConnected){delete b.dataset.ok;b.textContent='復元する';b.style.background=''}},3000);return}
- s.tasks.forEach(t=>{if(t.d>1)t.d=1});['done','log','cats'].forEach(k=>s[k]=s[k]||{});s.coins=s.coins||0;s.nid=s.nid||Math.max(0,...s.tasks.map(t=>t.id))+1;
+function backup(){const c=bkCode(),canShare=!!navigator.share;
+ modal(`<h3>💾 データのバックアップ</h3><div class="sub" style="text-align:left">下のどれかの方法でコードを保存しておいてね。別の端末やホーム画面のアプリで「復元」すると、記録をそのまま引き継げます。</div>
+ <textarea id="bk" rows="3" style="font-size:12px;margin-top:8px" onfocus="this.select()" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off">${c}</textarea>
+ <button class="btn b" onclick="cpy(this)">📋 コードをコピー</button>
+ ${canShare?'<button class="btn b" onclick="shareBk()">📤 メモやLINEに送る</button>':''}
+ <button class="btn b" onclick="saveFile()">📁 ファイルに保存</button>
+ <div class="lab" style="margin-top:18px">♻ 復元する</div>
+ <textarea id="rs" rows="3" placeholder="ここにバックアップのコードを貼り付け" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off"></textarea>
+ <button class="btn" onclick="restore(this)">復元する</button>
+ <label class="btn l" style="display:block;text-align:center;cursor:pointer">📂 ファイルから復元<input type="file" accept=".txt,text/plain" style="display:none" onchange="fromFile(this)"></label>
+ <div class="sub" style="margin-top:6px">復元すると、この端末にある今の記録は上書きされます（確認のため2回タップ）</div><button class="btn l" onclick="closeM()">とじる</button>`)}
+function cpy(b){const t=$('#bk'),c=t.value;const ok=()=>{b.textContent='✅ コピーしたよ！';setTimeout(()=>{if(b.isConnected)b.textContent='📋 コードをコピー'},2000)};
+ const fb=()=>{let r=false;try{t.focus();t.select();t.setSelectionRange(0,c.length);r=document.execCommand('copy')}catch(e){}if(r)ok();else{b.textContent='コードの欄をタップ→「コピー」してね';t.focus();t.select()}};
+ try{if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(c).then(ok,fb);else fb()}catch(e){fb()}}
+async function shareBk(){try{await navigator.share({title:'にゃんこ手帳のバックアップ',text:bkCode()})}catch(e){if(!e||e.name!=='AbortError')float('共有できなかったよ。コピーかファイル保存を使ってね')}}
+function saveFile(){try{const bl=new Blob([bkCode()],{type:'text/plain'}),u=URL.createObjectURL(bl),a=document.createElement('a');a.href=u;a.download=`nyanko-backup-${jst()}.txt`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);float('ファイルを保存したよ')}catch(e){float('ここではファイル保存できないみたい。コピーを使ってね')}}
+function fromFile(inp){const f=inp.files&&inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{$('#rs').value=String(r.result||'');float('読み込んだよ。「復元する」を2回タップしてね');$('#rs').scrollIntoView({block:'center'})};r.readAsText(f);inp.value=''}
+function parseBk(raw){const s0=String(raw||'').normalize('NFKC'),i=s0.indexOf('NYANKO1:');if(i<0)throw new Error('「NYANKO1:」で始まるコードが見つからないよ');
+ let b=s0.slice(i+8).replace(/[^A-Za-z0-9+/=_-]/g,'').replace(/-/g,'+').replace(/_/g,'/');b=b.replace(/=+$/,'');while(b.length%4)b+='=';
+ let s;try{s=JSON.parse(decodeURIComponent(escape(atob(b))))}catch(e){throw new Error('コードが途中で切れているみたい。全部コピーできているか確認してね')}
+ if(!s||!Array.isArray(s.tasks)||typeof s.xp!=='number')throw new Error('このコードは読み込めないみたい');return s}
+function restore(b){let s;try{s=parseBk($('#rs').value)}catch(e){b.textContent='⚠ '+e.message;b.style.background='#e5484d';setTimeout(()=>{if(b.isConnected){b.textContent='復元する';b.style.background=''}},3500);return}
+ if(!b.dataset.ok){b.dataset.ok=1;b.textContent='本当に上書きする？もう一度タップで確定';b.style.background='#e5484d';setTimeout(()=>{if(b.isConnected){delete b.dataset.ok;b.textContent='復元する';b.style.background=''}},4000);return}
+ s.tasks.forEach(t=>{if(t.d>1)t.d=1});['done','log','cats'].forEach(k=>s[k]=s[k]||{});s.coins=s.coins||0;s.nid=s.nid||Math.max(0,...s.tasks.map(t=>t.id))+1;s.welcomed=1;
  st=s;save();closeM();tab='t';render();burst(30);float('復元できたよ！')}
 
 const REF=[0,5,10,20];
