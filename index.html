@@ -405,13 +405,14 @@ function fireworks(cv){const x=cv.getContext('2d'),dpr=Math.min(devicePixelRatio
   for(let i=ps.length-1;i>=0;i--){const p=ps[i];p.x+=p.vx;p.y+=p.vy;p.vy+=.06;p.vx*=.985;p.l-=.011;if(p.l<=0){ps.splice(i,1);continue}
    x.globalAlpha=p.l;x.fillStyle=p.c;if(p.k){x.font=`${p.s*6}px sans-serif`;x.fillText('✦',p.x,p.y)}else{x.beginPath();x.arc(p.x,p.y,p.s,0,7);x.fill()}}
   x.globalAlpha=1;cpRAF=requestAnimationFrame(loop)};loop()}
-const newsBox=(title,steps,note,tryJs)=>`<div style="font-size:44px">🎉</div><div class="srt" style="font-size:22px">新機能のお知らせ</div><h3>${title}</h3>
+const newsBox=(title,steps,note,tryJs,tryLbl='さっそく使ってみる')=>`<div style="font-size:44px">🎉</div><div class="srt" style="font-size:22px">新機能のお知らせ</div><h3>${title}</h3>
  <div class="wl">${steps.map((s,i)=>`<div><b>${i+1}</b>${s}</div>`).join('')}</div>
  <div class="sub">${note}</div>
- <button class="btn" onclick="seenNews();closeM();${tryJs}">さっそく使ってみる</button><button class="btn b" onclick="seenNews();closeM();render();setTimeout(showNews,300)">OK！</button>`;
+ <button class="btn" onclick="seenNews();closeM();${tryJs}">${tryLbl}</button><button class="btn b" onclick="seenNews();closeM();render();setTimeout(showNews,300)">OK！</button>`;
 const NEWS=[
  {id:'future-tasks',html:()=>newsBox('未来のタスクを登録できるようにしました！',['「＋ タスクを追加」を押す','種類を「📌 1回だけ」にする','「やる日」で明日や先の日付を選ぶ'],'先の予定は「🗓 これからの予定」と、カレンダーのピンクの点で確認できるよ','addOn(addD(jst(),1))')},
- {id:'routine-sort',html:()=>newsBox('ルーティンの順番を入れ替えられるようにしました！',['「🔁 ルーティン」の右の「↕ 並べ替え」を押す','▲▼で順番を入れ替える','「✅ 完了」を押しておしまい'],'曜日指定のルーティンも、まとめて並べ替えられるよ','tryNews2()')}
+ {id:'routine-sort',html:()=>newsBox('ルーティンの順番を入れ替えられるようにしました！',['「🔁 ルーティン」の右の「↕ 並べ替え」を押す','▲▼で順番を入れ替える','「✅ 完了」を押しておしまい'],'曜日指定のルーティンも、まとめて並べ替えられるよ','tryNews2()')},
+ {id:'gacha-limit',html:()=>newsBox('ガチャは1日10回までになりました！',['ガチャ画面で「今日のガチャ ○ / 10回」をチェック','10回回したら、その日はおしまい','午前2:00に回数がリセットされるよ'],'使わなかったコインはそのまま貯まるよ。カプセルのデザインも新しくなったよ','tab=\'g\';render();scrollTo(0,0)','ガチャを見に行く')}
 ];
 let curNews=null;
 const seenList=()=>{if(!Array.isArray(st.newsSeen)){st.newsSeen=st.news?[st.news]:[];delete st.news}return st.newsSeen};
