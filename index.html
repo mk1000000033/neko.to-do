@@ -435,12 +435,13 @@ function help(){const s=(t,items,open)=>`<details ${open?'open':''}><summary>${t
  </div><button class="btn b" onclick="closeM()">とじる</button>`)}
 
 function bkCode(){return 'NYANKO1:'+btoa(unescape(encodeURIComponent(JSON.stringify(st))))}
+const inFrame=()=>{try{return window.self!==window.top}catch(e){return true}};
 function backup(){const c=bkCode(),canShare=!!navigator.share;
  modal(`<h3>💾 データのバックアップ</h3><div class="sub" style="text-align:left">下のどれかの方法でコードを保存しておいてね。別の端末やホーム画面のアプリで「復元」すると、記録をそのまま引き継げます。</div>
  <textarea id="bk" rows="3" style="font-size:12px;margin-top:8px" onfocus="this.select()" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off">${c}</textarea>
  <button class="btn b" onclick="cpy(this)">📋 コードをコピー</button>
  ${canShare?'<button class="btn b" onclick="shareBk()">📤 メモやLINEに送る</button>':''}
- <button class="btn b" onclick="saveFile()">📁 ファイルに保存</button>
+ ${inFrame()?'':'<button class="btn b" onclick="saveFile()">📁 ファイルに保存</button>'}
  <div class="lab" style="margin-top:18px">♻ 復元する</div>
  <textarea id="rs" rows="3" placeholder="ここにバックアップのコードを貼り付け" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off"></textarea>
  <button class="btn" onclick="restore(this)">復元する</button>
